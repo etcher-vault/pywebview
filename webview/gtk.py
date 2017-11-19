@@ -7,6 +7,8 @@ http://github.com/r0x0r/pywebview/
 import sys
 import threading
 import logging
+import webbrowser
+
 from uuid import uuid1
 from webview.localization import localization
 from webview import _escape_string, OPEN_DIALOG, FOLDER_DIALOG, SAVE_DIALOG
@@ -72,6 +74,7 @@ class BrowserView:
         self.webview = webkit.WebView()
         self.webview.connect('notify::visible', self.on_webview_ready)
         self.webview.connect('document-load-finished', self.on_load_finish)
+        self.webview.connect('new-window-policy-decision-requested', self.on_new_window_request)
         self.webview.props.settings.props.enable_default_context_menu = False
         self.webview.props.opacity = 0.0
         scrolled_window.add(self.webview)
@@ -109,6 +112,11 @@ class BrowserView:
         # Show the webview if it's not already visible
         if not webview.props.opacity:
             glib.idle_add(webview.set_opacity, 1.0)
+
+    def on_new_window_request(self, webview, frame, request, action, decision, *data):
+        if action.get_target_frame() == '_blank':
+            webbrowser.open(request.get_uri(), 2, True)
+        decision.ignore()
 
     def show(self):
         gtk.main()
